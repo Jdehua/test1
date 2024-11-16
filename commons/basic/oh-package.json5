@@ -7,5 +7,9 @@
   "license": "Apache-2.0",
   "packageType": "InterfaceHar",
   "dependencies": {
-  }
+    "@abner/log": "^1.0.3",
+    "@ohos/axios": "^2.2.4"
+  },
+  "devDependencies": {},
+  "dynamicDependencies": {}
 }

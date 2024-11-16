@@ -12,9 +12,18 @@
     "deliveryWithInstall": true,
     "installationFree": false,
     "pages": "$profile:main_pages",
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET" // 网络请求
+      }
+    ],
     "abilities": [
       {
         "name": "EntryAbility",
+        // 屏幕根据 开关 和 传感器 旋转
+        "orientation": "auto_rotation_unspecified",
+        // 最小窗口需要 2in1 自由窗口能测
+        "minWindowWidth": 331,
         "srcEntry": "./ets/entryability/EntryAbility.ets",
         "description": "$string:EntryAbility_desc",
         "icon": "$media:layered_image",
