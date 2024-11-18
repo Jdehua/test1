@@ -9,6 +9,8 @@
       "2in1"
     ],
     "deliveryWithInstall": true,
-    "pages": "$profile:main_pages"
+    "pages": "$profile:main_pages",
+    // 路由表： profile 文件夹中的 route_map.json
+    "routerMap":"$profile:route_map"
   }
 }

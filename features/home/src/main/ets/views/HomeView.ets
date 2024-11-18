@@ -41,6 +41,8 @@ export struct HomeView {
   @State isLoading: boolean = true
   // 下拉刷新
   @State isRefreshing: boolean = false
+  // 路由栈控制器
+  @Consume pageStack: NavPathStack
 
   async aboutToAppear() {
     // 显示加载中
@@ -62,7 +64,6 @@ export struct HomeView {
 
   // 1 轮播图数据   2 获取推荐商品数据   3 获取爆款推荐数   4 获取一站买全数据    5 获取新鲜好物数据    6 推荐商品列表
   async getData() {
-
     const proArr =
       [getBannerApi(), getCategoryApi(), getHotPreferenceApi(), getHotInVogueApi(), getHotOneStopApi(), getNewApi(),
         getRecommendApi()]
@@ -91,6 +92,10 @@ export struct HomeView {
       // this.recommendGoods = resArr[6].value.data.result as MkGoodsItem[]
       this.recommendGoodsLazy.reloadData(resArr[6].value.data.result as MkGoodsItem[])
     }
+
+    // 保存分类数据
+    AppStorage.setOrCreate('categoryData', this.categories)
+
   }
 
   // 滚动触底
@@ -210,6 +215,10 @@ export struct HomeView {
                 .height(40)
                 .borderRadius(20)
                 .padding({ left: 12 })
+                .onClick(() => {
+                  // 点击搜索界面
+                  this.pageStack.pushPathByName('SearchView', null)
+                })
               }
               .padding({ left: 16, right: 16, top: this.safeTop })
             }
@@ -343,7 +352,7 @@ export struct HomeView {
               }).getValue(this.breakpoint))
               .columnsGap(8)
               .rowsGap(10)
-              // 有高度，不会被一直撑开，启动懒加载
+              // 有高度，不会被一直撑开，启动懒加载 (设置-可视区域)
               .height("100%")
               // 内层嵌套滚动
               .nestedScroll({

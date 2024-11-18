@@ -1,6 +1,7 @@
 import { CategoryItem, MkGoodsItem, RequestAxios } from 'basic'
 // 数据类型已经提供好了
 import { Banner, HotResult } from '../viewmodel/index'
+import { SearchParams, SearchResult } from '../views/SearchResultView'
 
 // 获取轮播图
 export const getBannerApi = () => {
@@ -35,4 +36,9 @@ export const getNewApi = () => {
 // 推荐商品列表
 export const getRecommendApi = (limit: number = 8) => {
   return RequestAxios.get<MkGoodsItem[]>('/home/recommend', new Object({ limit }))
+}
+
+// 搜索商品
+export const searchGoodsApi = (data: SearchParams) => {
+  return RequestAxios.post<SearchResult>('/search/all', data)
 }
