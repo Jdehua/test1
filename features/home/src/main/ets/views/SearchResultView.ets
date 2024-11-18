@@ -1,7 +1,8 @@
 import { MkGoodsItem, MKPullToRefresh } from 'basic'
 import { searchGoodsApi } from '../api'
 import { MkGoods } from '../components/MkGoods'
-import { GoodsItems } from '../viewmodel'
+import { GoodsItems, GoodsItemsDataSource } from '../viewmodel'
+import { promptAction } from '@kit.ArkUI'
 
 // 联合类型
 export type SortField = 'publishTime' | 'orderNum' | 'price'
@@ -50,13 +51,17 @@ export struct SearchResultView {
   // 顶部安全区域
   @StorageProp('safeTop') safeTop: number = 0
   // mock 数据
-  @State data: MkGoodsItem[] = new Array(8).fill({
-    "id": "4033959",
-    "name": "3秒快速拆琴轻松保养odin奥丁12半音阶口琴",
-    "price": 329,
-    "picture": "https://yanxuan-item.nosdn.127.net/937a8e46a9284e8f7e00e13911ecfbe7.png",
-    "payCount": 0
-  })
+  // @State data: MkGoodsItem[] = []
+  // 懒加载
+  @State dataLazy: GoodsItemsDataSource = new GoodsItemsDataSource()
+  //   new Array(8).fill({
+  //   "id": "4033959",
+  //   "name": "3秒快速拆琴轻松保养odin奥丁12半音阶口琴",
+  //   "price": 329,
+  //   "picture": "https://yanxuan-item.nosdn.127.net/937a8e46a9284e8f7e00e13911ecfbe7.png",
+  //   "payCount": 0
+  // })
+
   // 查询参数
   @State
   @Watch('paramsChange')
@@ -78,6 +83,8 @@ export struct SearchResultView {
   scroller = new Scroller()
   // 路由栈控制器
   @Consume pageStack: NavPathStack
+  // 总页数
+  totalPage: number = 0
 
   aboutToAppear(): void {
     // 解析参数 getParamByName 获取的是数组 注意通过 [0] 获取字符串
@@ -92,8 +99,34 @@ export struct SearchResultView {
 
   // 搜索商品
   async queryData() {
+    // 重置页码
+    this.params.page = 1
+    // 重置数据
+    this.dataLazy.reloadData([])
+    // 获取数据
     const res = await searchGoodsApi(this.params)
-    this.data = res.data.result.pageData.items
+    // this.data = res.data.result.pageData.items
+    this.dataLazy.reloadData(res.data.result.pageData.items as MkGoodsItem[])
+    // 保存总页数 (当前筛选条件)
+    this.totalPage = res.data.result.pageData.pages
+  }
+
+  // 加载更多数据
+  async loadMore() {
+    // 如果当前页码小于总页数
+    if (this.params.page < this.totalPage) {
+      // 页码增加
+      this.params.page++
+      // 发送请求
+      const res = await searchGoodsApi(this.params)
+      // 追加数据
+      // this.data.push(...res.data.result.pageData.items as MkGoodsItem[])
+      res.data.result.pageData.items.forEach((item) => {
+        this.dataLazy.pushData(item) // 每次只能追加一个，循环添加
+      })
+    } else {
+      promptAction.showToast({ message: '没有更多数据啦～' })
+    }
   }
 
   build() {
@@ -159,19 +192,29 @@ export struct SearchResultView {
       .border({ width: { bottom: 0.5 }, color: $r('[basic].color.border') })
 
       MKPullToRefresh({
-        data: this.data,
+        data: $dataLazy,
         scroller: this.scroller,
         customList: () => {
           this.getWaterFlowView()
         },
+        // 可选项，下拉刷新回
+        //
+        //
+        //
+        //
+        // 调
         onRefresh: async () => {
-          // 刷新数据
-          this.data = []
-          // 重置页码
+          // 清空数据
+          // this.data = []
+          this.dataLazy.reloadData([])
           this.params.page = 1
-          // 重新查询数据
           await this.queryData()
-          return "刷新成功"
+          return '刷新成功'
+        },
+        // 上拉加载更多回调
+        onLoadMore: async () => {
+          this.loadMore()
+          return '上拉加载'
         }
       })
         .layoutWeight(1)
@@ -183,7 +226,7 @@ export struct SearchResultView {
   @Builder
   getWaterFlowView() {
     WaterFlow({ scroller: this.scroller }) {
-      ForEach(this.data, (item: MkGoodsItem) => {
+      LazyForEach(this.dataLazy, (item: MkGoodsItem) => {
         FlowItem() {
           MkGoods({ goods: item, smallImage: true })
         }
